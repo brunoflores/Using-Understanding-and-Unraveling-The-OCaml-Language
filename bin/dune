@@ -1,0 +1,6 @@
+(executable
+ (public_name unraveling_ocaml)
+ (name main)
+ (libraries unraveling_ocaml)
+ (preprocess
+   (pps ppx_deriving.show)))
