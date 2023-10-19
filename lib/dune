@@ -1,2 +1,4 @@
 (library
- (name unraveling_ocaml))
+ (name unraveling_ocaml)
+ (preprocess
+   (pps ppx_deriving.show)))
