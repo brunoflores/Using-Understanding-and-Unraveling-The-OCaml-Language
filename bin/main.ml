@@ -1,7 +1,7 @@
 type name = Name of string | Int of int [@@deriving show]
 
 type constant =
-  | Constr of { name : name }
+  | Constr of { name : name; arity : int }
   | Prim of { name : name; arity : int }
 [@@deriving show]
 
@@ -17,7 +17,7 @@ type expr =
 
 let plus = Prim { name = Name "+"; arity = 2 }
 let times = Prim { name = Name "*"; arity = 2 }
-let int n = Constr { name = Int n }
+let int n = Constr { name = Int n; arity = 0 }
 
 let example =
   let plus_x n = App (App (Const plus, Var "x"), n) in
@@ -50,8 +50,8 @@ let delta_bin_arith op code = function
   | App
       ( App
           ( (Const (Prim { name = Name _; arity = 2 }) as c),
-            Const (Constr { name = Int x }) ),
-        Const (Constr { name = Int y }) )
+            Const (Constr { name = Int x; _ }) ),
+        Const (Constr { name = Int y; _ }) )
     when c = op ->
       Const (int (code x y))
   | _ -> raise Reduce
