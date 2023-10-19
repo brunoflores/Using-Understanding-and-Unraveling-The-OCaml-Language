@@ -1,4 +1,5 @@
 open Unraveling_ocaml.Syntax
+open Unraveling_ocaml.Reduce
 
 (*
    The example is:
@@ -16,16 +17,6 @@ let example =
       App
         ( Fun ("x", App (App (Const plus, Var "x"), Const (int 1))),
           Const (int 2) ) )
-
-let rec evaluated = function Fun (_, _) -> true | u -> partial_application 0 u
-
-and partial_application n = function
-  | Const (Prim c) -> c.arity > n
-  | Const (Constr _) -> true
-  | App (u, v) ->
-      let e = evaluated v in
-      e && partial_application (n + 1) u
-  | _ -> false
 
 (* Redexes are partial functions from programs to programs. Hence, they can be
    represented as OCaml functions, raising an exception [Reduce] when applied
