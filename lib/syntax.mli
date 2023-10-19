@@ -6,6 +6,7 @@ type constant =
 
 type var = string
 
+(* Abstract syntax tree *)
 type expr =
   | Var of var
   | Const of constant
@@ -13,7 +14,10 @@ type expr =
   | App of expr * expr
   | Let of var * expr * expr
 
+(* Auxiliary functions to build constants *)
 val plus : constant
 val times : constant
 val int : int -> constant
+
+(* Printing *)
 val show_expr : expr -> string
