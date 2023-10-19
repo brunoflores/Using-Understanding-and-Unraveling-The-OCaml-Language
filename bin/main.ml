@@ -1,5 +1,10 @@
 type name = Name of string | Int of int [@@deriving show]
-type constant = { name : name; constr : bool; arity : int } [@@deriving show]
+
+type constant =
+  | Constr of { name : name }
+  | Prim of { name : name; arity : int }
+[@@deriving show]
+
 type var = string [@@deriving show]
 
 type expr =
@@ -10,20 +15,27 @@ type expr =
   | Let of var * expr * expr
 [@@deriving show]
 
-let plus = Const { name = Name "+"; arity = 2; constr = false }
-let times = Const { name = Name "*"; arity = 2; constr = false }
-let int n = Const { name = Int n; arity = 0; constr = true }
+let plus = Prim { name = Name "+"; arity = 2 }
+let times = Prim { name = Name "*"; arity = 2 }
+let int n = Constr { name = Int n }
 
 let example =
-  let plus_x n = App (App (plus, Var "x"), n) in
+  let plus_x n = App (App (Const plus, Var "x"), n) in
   App
-    ( Fun ("x", App (App (times, plus_x (int 1)), plus_x (int (-1)))),
-      App (Fun ("x", App (App (plus, Var "x"), int 1)), int 2) )
+    ( Fun
+        ( "x",
+          App
+            ( App (Const times, plus_x (Const (int 1))),
+              plus_x (Const (int (-1))) ) ),
+      App
+        ( Fun ("x", App (App (Const plus, Var "x"), Const (int 1))),
+          Const (int 2) ) )
 
 let rec evaluated = function Fun (_, _) -> true | u -> partial_application 0 u
 
 and partial_application n = function
-  | Const c -> c.constr || c.arity > n
+  | Const (Prim c) -> c.arity > n
+  | Const (Constr _) -> true
   | App (u, v) ->
       let e = evaluated v in
       e && partial_application (n + 1) u
@@ -37,15 +49,15 @@ exception Reduce
 let delta_bin_arith op code = function
   | App
       ( App
-          ( (Const { name = Name _; arity = 2; _ } as c),
-            Const { name = Int x; _ } ),
-        Const { name = Int y; _ } )
+          ( (Const (Prim { name = Name _; arity = 2 }) as c),
+            Const (Constr { name = Int x }) ),
+        Const (Constr { name = Int y }) )
     when c = op ->
-      int (code x y)
+      Const (int (code x y))
   | _ -> raise Reduce
 
-let delta_plus = delta_bin_arith plus ( + )
-let delta_timees = delta_bin_arith times ( * )
+let delta_plus = delta_bin_arith (Const plus) ( + )
+let delta_timees = delta_bin_arith (Const times) ( * )
 let delta_rules = [ delta_plus; delta_timees ]
 
 (* The union of partial function (with priority on the right): *)
@@ -125,6 +137,7 @@ let _ =
    In small-step, values are always a subset of programs.
    In some cases, it is simpler to let values differ from programs. *)
 
+(*
 exception Undefined_constant of string
 
 let type_of_const c =
@@ -133,3 +146,4 @@ let type_of_const c =
   | Int _ -> tint
   | Name ("+" | "*") -> int3
   | Name n -> raise (Undefined_constant n)
+*)
