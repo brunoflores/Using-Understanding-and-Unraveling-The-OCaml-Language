@@ -34,8 +34,8 @@ let delta_bin_arith op code = function
   | _ -> raise Reduce
 
 let delta_plus = delta_bin_arith (Const plus) ( + )
-let delta_timees = delta_bin_arith (Const times) ( * )
-let delta_rules = [ delta_plus; delta_timees ]
+let delta_times = delta_bin_arith (Const times) ( * )
+let delta_rules = [ delta_plus; delta_times ]
 
 (* The union of partial function (with priority on the right): *)
 let union f g a = try g a with Reduce -> f a
