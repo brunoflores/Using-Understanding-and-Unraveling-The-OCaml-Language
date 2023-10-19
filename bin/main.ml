@@ -19,6 +19,11 @@ let plus = Prim { name = Name "+"; arity = 2 }
 let times = Prim { name = Name "*"; arity = 2 }
 let int n = Constr { name = Int n; arity = 0 }
 
+(*
+   The example is:
+   (\x. (\x. x+1)*(\x. x-1)) ((\x. x+1) 2)
+   8
+*)
 let example =
   let plus_x n = App (App (Const plus, Var "x"), n) in
   App
