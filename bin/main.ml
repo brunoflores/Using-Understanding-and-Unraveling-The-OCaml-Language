@@ -18,49 +18,6 @@ let example =
         ( Fun ("x", App (App (Const plus, Var "x"), Const (int 1))),
           Const (int 2) ) )
 
-(* The function [eval] visits the tree top-down. *)
-let rec eval =
-  let eval_top_reduce a = try eval (top_reduction a) with Reduce -> a in
-  function
-  | App (a1, a2) ->
-      let v1 = eval a1 in
-      let v2 = eval a2 in
-      eval_top_reduce (App (v1, v2))
-  | Let (x, a1, a2) ->
-      let v1 = eval a1 in
-      eval_top_reduce (Let (x, v1, a2))
-  | a -> eval_top_reduce a
-
-(*
-let rec eval_step = function
-  | App (a1, a2) when not (evaluated a1) -> App (eval_step a1, a2)
-  | App (a1, a2) when not (evaluated a2) -> App (a1, eval_step a2)
-  | Let (x, a1, a2) when not (evaluated a1) -> Let (x, eval_step a1, a2)
-  | a -> top_reduction a
-*)
-
-(* Contexts as functions from terms to terms. *)
-type context = expr -> expr
-
-let hole : context = fun t -> t
-let appL a t = App (t, a)
-let appR a t = App (a, t)
-let letL x a t = Let (x, t, a)
-let ( ** ) e1 (e0, a0) = ((fun a -> e1 (e0 a)), a0)
-
-(* Split a term into a pair of an evaluation context and a term: *)
-let rec eval_context : expr -> context * expr = function
-  | App (a1, a2) when not (evaluated a1) -> appL a2 ** eval_context a1
-  | App (a1, a2) when not (evaluated a2) -> appR a1 ** eval_context a2
-  | Let (x, a1, a2) when not (evaluated a1) -> letL x a2 ** eval_context a2
-  | a -> (hole, a)
-
-let eval_step a =
-  let c, t = eval_context a in
-  c (top_reduction t)
-
-let rec eval_steps a = try eval_steps (eval_step a) with Reduce -> a
-
 let _ =
   let e = eval example in
   print_endline @@ show_expr e;
