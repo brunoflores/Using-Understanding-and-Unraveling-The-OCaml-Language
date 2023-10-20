@@ -15,7 +15,7 @@ and partial_application n = function
    to values outside of their domain. *)
 exception Reduce
 
-let delta_bin_arith op code = function
+let delta_bin_arith (op : expr) (code : int -> int -> int) = function
   | App
       ( App
           ( (Const (Prim { name = Name _; arity = 2 }) as c),
@@ -30,19 +30,21 @@ let delta_times = delta_bin_arith (Const times) ( * )
 let delta_rules = [ delta_plus; delta_times ]
 
 (* The union of partial function (with priority on the right): *)
-let union f g a = try g a with Reduce -> f a
+let union (f : expr -> expr) (g : expr -> expr) (a : expr) =
+  try g a with Reduce -> f a
 
 (* The delta-reduction: *)
-let delta = List.fold_right union delta_rules (fun _ -> raise Reduce)
+let delta = List.fold_right union delta_rules (fun (_e : expr) -> raise Reduce)
 
-let rec subst x v a =
-  assert (evaluated v);
+(* (\x.a) v --> a[v/x] *)
+let rec subst (x : var) (v : expr) (a : expr) : expr =
+  let _ = assert (evaluated v) in
   match a with
-  | Var y -> if x = y then v else a
-  | Fun (y, a') -> if x = y then a else Fun (y, subst x v a')
+  | Var y -> if String.equal x y then v else a
+  | Fun (y, a') -> if String.equal x y then a else Fun (y, subst x v a')
   | App (a', a'') -> App (subst x v a', subst x v a'')
   | Let (y, a', a'') ->
-      if x = y then Let (y, subst x v a', a'')
+      if String.equal x y then Let (y, subst x v a', a'')
       else Let (y, subst x v a', subst x v a'')
   | Const c -> Const c
 
