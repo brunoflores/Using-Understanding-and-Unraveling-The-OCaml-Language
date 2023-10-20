@@ -56,9 +56,9 @@ let beta = function
 let top_reduction = union beta delta
 
 (* The function [eval] visits the tree top-down. *)
-let rec eval =
+let rec eval e =
   let eval_top_reduce a = try eval (top_reduction a) with Reduce -> a in
-  function
+  match e with
   | App (a1, a2) ->
       let v1 = eval a1 in
       let v2 = eval a2 in
