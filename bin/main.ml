@@ -19,10 +19,15 @@ let example =
           Const (int 2) ) )
 
 let _ =
+  let print a =
+    match a with
+    | Const (Constr { name = Int n; _ }) -> n
+    | _ -> failwith "not a number"
+  in
   let e = eval example in
-  print_endline @@ show_expr e;
+  Printf.printf "%d\n" @@ print e;
   let e' = eval_steps example in
-  print_endline @@ show_expr e'
+  Printf.printf "%d\n" @@ print e'
 
 (* Big-step operational semantics
    In small-step, values are always a subset of programs.

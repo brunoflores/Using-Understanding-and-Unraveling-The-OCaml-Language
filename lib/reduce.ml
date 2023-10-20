@@ -68,14 +68,6 @@ let rec eval =
       eval_top_reduce (Let (x, v1, a2))
   | (Fun _ | Const _ | Var _) as a -> eval_top_reduce a
 
-(*
-let rec eval_step = function
-  | App (a1, a2) when not (evaluated a1) -> App (eval_step a1, a2)
-  | App (a1, a2) when not (evaluated a2) -> App (a1, eval_step a2)
-  | Let (x, a1, a2) when not (evaluated a1) -> Let (x, eval_step a1, a2)
-  | a -> top_reduction a
-*)
-
 (* Contexts as functions from terms to terms. *)
 type context = expr -> expr
 
@@ -97,3 +89,11 @@ let eval_step a =
   c (top_reduction t)
 
 let rec eval_steps a = try eval_steps (eval_step a) with Reduce -> a
+
+(*
+let rec eval_step = function
+  | App (a1, a2) when not (evaluated a1) -> App (eval_step a1, a2)
+  | App (a1, a2) when not (evaluated a2) -> App (a1, eval_step a2)
+  | Let (x, a1, a2) when not (evaluated a1) -> Let (x, eval_step a1, a2)
+  | a -> top_reduction a
+*)
