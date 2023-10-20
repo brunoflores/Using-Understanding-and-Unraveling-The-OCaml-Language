@@ -1,4 +1,12 @@
+(ocamllex
+ (modules lexer))
+
+(menhir
+ (modules parser)
+ (flags --table --strict))
+
 (library
  (name unraveling_ocaml)
+ (libraries stdio menhirLib)
  (preprocess
    (pps ppx_deriving.show)))
