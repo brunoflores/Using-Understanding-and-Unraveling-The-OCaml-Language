@@ -25,9 +25,10 @@ let _ =
     | _ -> failwith "not a number"
   in
   let e = eval example in
-  Printf.printf "%d\n" @@ print e;
+  let _ = Printf.printf "%d\n" @@ print e in
   let e' = eval_steps example in
-  Printf.printf "%d\n" @@ print e'
+  let _ = Printf.printf "%d\n" @@ print e' in
+  ()
 
 (* Big-step operational semantics
    In small-step, values are always a subset of programs.
