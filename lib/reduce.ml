@@ -75,7 +75,9 @@ let hole : context = fun t -> t
 let appL a t = App (t, a)
 let appR a t = App (a, t)
 let letL x a t = Let (x, t, a)
-let ( ** ) e1 (e0, a0) = ((fun a -> e1 (e0 a)), a0)
+
+let ( ** ) (e1 : context) ((e0, a0) : context * expr) : context * expr =
+  ((fun a -> e1 (e0 a)), a0)
 
 (* Split a term into a pair of an evaluation context and a term: *)
 let rec eval_context : expr -> context * expr = function
