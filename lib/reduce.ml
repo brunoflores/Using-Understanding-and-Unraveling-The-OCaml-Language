@@ -99,3 +99,84 @@ let rec eval_step = function
   | Let (x, a1, a2) when not (evaluated a1) -> Let (x, eval_step a1, a2)
   | a -> top_reduction a
 *)
+
+type context_z =
+  | Top
+  | AppL of context_z * expr
+  | AppR of value * context_z
+  | LetL of string * context_z * expr
+
+and value = int * expr
+
+let rec fill_context = function
+  | Top, e -> e
+  | AppL (c, l), e -> fill_context (c, App (e, l))
+  | AppR ((_, e1), c), e2 -> fill_context (c, App (e1, e2))
+  | LetL (x, c, e2), e1 -> fill_context (c, Let (x, e1, e2))
+
+exception Error of context_z * expr
+exception Value of int
+
+let rec decompose_down ((c, e) : context_z * expr) : context_z * expr =
+  match e with
+  | Var _ -> raise (Error (c, e))
+  | Const (Constr c) -> raise (Value (c.arity + 1))
+  | Const (Prim c) -> raise (Value c.arity)
+  | Fun (_, _) -> raise (Value 1)
+  | Let (x, e1, e2) -> decompose_down (LetL (x, c, e2), e1)
+  | App (e1, e2) -> (
+      try decompose_down (AppL (c, e2), e1)
+      with Value k1 -> (
+        try decompose_down (AppR ((k1, e1), c), e2)
+        with Value _ -> if k1 > 1 then raise (Value (k1 - 1)) else (c, e)))
+
+let rec decompose_up k ((c, v) : context_z * expr) =
+  if k > 0 then
+    match c with
+    | Top -> raise Not_found
+    | LetL (x, c', e) -> (c', Let (x, v, e))
+    | AppR ((k', v'), c') -> decompose_up (k' - 1) (c', App (v', v))
+    | AppL (c', e) -> (
+        try decompose_down (AppR ((k, v), c'), e)
+        with Value _ -> decompose_up (k - 1) (c', App (v, e)))
+  else (c, v)
+
+let decompose ce = try decompose_down ce with Value k -> decompose_up k ce
+let reduce_in ((c : context_z), e) = (c, top_reduction e)
+let eval_step ce = reduce_in (decompose ce)
+let rec eval_all ce = try eval_all (eval_step ce) with Not_found -> ce
+let eval_z e = fill_context (eval_all (Top, e))
+
+(* Printing *)
+let hole = Const (Constr { name = Name "[]"; arity = 0 })
+
+let rec expr_with expr_in_hole k out =
+  let expr = expr_with expr_in_hole in
+  let string x = Format.fprintf out x in
+  let paren p f =
+    if k > p then string "(";
+    f ();
+    if k > p then string ")"
+  in
+  function
+  | Var x -> string "%s" x
+  | Const _ as c when c = hole -> string "[%a]" (expr_with hole 0) expr_in_hole
+  | Const (Constr { name = Int n; _ }) -> string "%d" n
+  | Const (Constr { name = Name _; _ }) -> failwith "impossible"
+  | Const (Prim { name = Name c; _ }) -> string "%s" c
+  | Const (Prim { name = Int _; _ }) -> failwith "impossible"
+  | Fun (x, a) -> paren 0 (fun () -> string "fun %s -> %a" x (expr 0) a)
+  | App (App (Const (Prim { name = Name (("+" | "*") as n); _ }), a1), a2) ->
+      paren 1 (fun () -> string "%a %s %a" (expr 2) a1 n (expr 2) a2)
+  | App (a1, a2) -> paren 1 (fun () -> string "%a %a" (expr 1) a1 (expr 2) a2)
+  | Let (x, a1, a2) ->
+      paren 0 (fun () -> string "let %s = %a in %a" x (expr 0) a1 (expr 0) a2)
+
+let print_context_expr (c, e) =
+  expr_with e 0 Format.std_formatter (fill_context (c, hole))
+
+let print_expr e = expr_with hole 0 Format.std_formatter e
+let print_context c = print_expr (fill_context (c, hole))
+let _ = print_expr
+let _ = print_context
+let _ = print_context_expr
