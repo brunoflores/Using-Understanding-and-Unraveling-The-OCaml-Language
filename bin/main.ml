@@ -49,6 +49,8 @@ decompose raises Not_found
 - : expr = Const (Constr {Unraveling_ocaml.Syntax.name = Int 8; arity = 0})
 *)
 
+let eval_big_step : expr -> expr = Unraveling_ocaml.Big_step.eval_big_step
+
 let _ =
   let print a =
     match a with
@@ -61,19 +63,6 @@ let _ =
   let _ = Printf.printf "%d\n" @@ print e' in
   let e'' = eval_z example in
   let _ = Printf.printf "%d\n" @@ print e'' in
+  let e''' = eval_big_step example in
+  let _ = Printf.printf "%d\n" @@ print e''' in
   ()
-
-(* Big-step operational semantics
-   In small-step, values are always a subset of programs.
-   In some cases, it is simpler to let values differ from programs. *)
-
-(*
-exception Undefined_constant of string
-
-let type_of_const c =
-  let int3 = tarrow tint (tarrow tint tint) in
-  match c.name with
-  | Int _ -> tint
-  | Name ("+" | "*") -> int3
-  | Name n -> raise (Undefined_constant n)
-*)
