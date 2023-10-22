@@ -71,7 +71,7 @@ let rec eval e =
 (* Contexts as functions from terms to terms. *)
 type context = expr -> expr
 
-let hole : context = fun t -> t
+let hole : context = fun t -> t (* Empty context *)
 let appL a t = App (t, a)
 let appR a t = App (a, t)
 let letL x a t = Let (x, t, a)
